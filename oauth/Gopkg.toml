@@ -29,6 +29,10 @@
   name = "github.com/go-resty/resty"
   version = "2.2.0"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/tv2169145/store_utils-go"
+
 [prune]
   go-tests = true
   unused-packages = true
