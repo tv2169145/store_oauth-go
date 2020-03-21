@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-resty/resty"
-	"github.com/tv2169145/store_oauth-go/oauth/errors"
+	"github.com/tv2169145/store_utils-go/rest_errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -59,7 +59,7 @@ func GetClientId(request *http.Request) int64 {
 	return clientId
 }
 
-func AuthenticateRequest(request *http.Request) *errors.RestErr {
+func AuthenticateRequest(request *http.Request) rest_errors.RestErr {
 	if request == nil {
 		return nil
 	}
@@ -71,7 +71,7 @@ func AuthenticateRequest(request *http.Request) *errors.RestErr {
 	}
 	token, err := getAccessToken(accessTokenId)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.Status() == http.StatusNotFound {
 			return nil
 		}
 		return err
@@ -89,23 +89,23 @@ func cleanRequest(request *http.Request) {
 	request.Header.Del(headerXCallerId)
 }
 
-func getAccessToken(accessTokenId string) (*accessToken, *errors.RestErr) {
+func getAccessToken(accessTokenId string) (*accessToken, rest_errors.RestErr) {
 	oauthRestClient.SetHostURL("http://localhost:8080")
 	oauthRestClient.SetTimeout(1 * time.Minute)
 	response, err := oauthRestClient.R().Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenId))
 	if err != nil {
-		return nil, errors.NewInternalServerError("invalid restclient response when trying to get access token")
+		return nil, rest_errors.NewInternalServerError("invalid restclient response when trying to get access token", err)
 	}
 	if response.StatusCode() > 299 {
-		var restErr errors.RestErr
+		var restErr rest_errors.RestErr
 		if err := json.Unmarshal(response.Body(), &restErr); err != nil {
-			return nil, errors.NewInternalServerError("invalid response body when unmarshal response to restErr")
+			return nil, rest_errors.NewInternalServerError("invalid response body when unmarshal response to restErr", err)
 		}
-		return nil, &restErr
+		return nil, restErr
 	}
 	var token accessToken
 	if err := json.Unmarshal(response.Body(), &token); err != nil {
-		return nil, errors.NewInternalServerError("invalid response body when unmarshal response to token")
+		return nil, rest_errors.NewInternalServerError("invalid response body when unmarshal response to token", err)
 	}
 	return &token, nil
 }
