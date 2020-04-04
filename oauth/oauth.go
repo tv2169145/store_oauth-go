@@ -93,11 +93,13 @@ func getAccessToken(accessTokenId string) (*accessToken, rest_errors.RestErr) {
 	oauthRestClient.SetHostURL("http://localhost:8080")
 	oauthRestClient.SetTimeout(1 * time.Minute)
 	response, err := oauthRestClient.R().Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenId))
+
 	if err != nil {
 		return nil, rest_errors.NewInternalServerError("invalid restclient response when trying to get access token", err)
 	}
 	if response.StatusCode() > 299 {
 		var restErr rest_errors.RestErr
+		restErr = rest_errors.GetRestErrorInstance()
 		if err := json.Unmarshal(response.Body(), &restErr); err != nil {
 			return nil, rest_errors.NewInternalServerError("invalid response body when unmarshal response to restErr", err)
 		}
